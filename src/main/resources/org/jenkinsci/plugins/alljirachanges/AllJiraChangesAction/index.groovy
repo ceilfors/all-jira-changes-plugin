@@ -74,7 +74,7 @@ private showChanges(Collection<AbstractBuild> builds) {
 
         for (jiraIssue in jiraIssueMultimap.keySet()) {
             def issueExists = my.jiraSite.existsIssue(jiraIssue.id)
-            h4() { showTitle(jiraIssue, issueExists) }
+            h3() { showTitle(jiraIssue, issueExists) }
             ol() {
                 def changeLogs = jiraIssueMultimap.get(jiraIssue)
                 for (def changeLog : changeLogs) {
@@ -94,6 +94,7 @@ private showChanges(Collection<AbstractBuild> builds) {
 def showTitle(JiraIssue jiraIssue, issueExists) {
     def title = "${jiraIssue.id} - ${jiraIssue.title}"
     if (issueExists) {
+        img(src: my.getIssueType(jiraIssue.id).icon, style: "width: 17px; height: 17px; margin-right: 5px")
         a(href: "${my.jiraSite.getUrl(jiraIssue.id)}", title)
     } else {
         text(title)

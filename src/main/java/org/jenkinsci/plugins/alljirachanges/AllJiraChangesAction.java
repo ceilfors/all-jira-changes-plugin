@@ -33,6 +33,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.plugins.jira.JiraIssue;
 import hudson.plugins.jira.JiraSite;
+import hudson.plugins.jira.soap.RemoteIssueType;
 import hudson.scm.ChangeLogSet;
 import org.jenkinsci.plugins.all_changes.ChangesAggregator;
 import org.jvnet.localizer.LocaleProvider;
@@ -40,9 +41,7 @@ import org.jvnet.localizer.LocaleProvider;
 import javax.xml.rpc.ServiceException;
 import java.io.IOException;
 import java.text.DateFormat;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 
 import static org.jenkinsci.plugins.alljirachanges.Messages.*;
@@ -58,6 +57,8 @@ public class AllJiraChangesAction implements Action {
     private AbstractProject<?, ?> project;
 
     private transient List<ChangesAggregator> aggregators;
+
+    private transient Map<String, RemoteIssueType> jiraIssueTypeMap;
 
     public AllJiraChangesAction(AbstractProject<?, ?> project) {
         this.project = project;
@@ -98,6 +99,21 @@ public class AllJiraChangesAction implements Action {
         }
 
         return jiraIssueMultimap;
+    }
+
+    /**
+     * Returns the issue type of the specified jira id.
+     * @param jiraId the jira id
+     * @return the issue type
+     */
+    public RemoteIssueType getIssueType(String jiraId) {
+        try {
+            return getJiraIssueTypeMap().get(getJiraSite().createSession().getIssue(jiraId).getType());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (ServiceException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -159,6 +175,27 @@ public class AllJiraChangesAction implements Action {
             builds.addAll(newBuilds);
         } while (size < builds.size());
         return builds;
+    }
+
+    /**
+     * Lazy loads and returns the JIRA issue type map from id to the name.
+     * @return the issue type map
+     */
+    protected Map<String, RemoteIssueType> getJiraIssueTypeMap() {
+        if (jiraIssueTypeMap == null) {
+            jiraIssueTypeMap = new HashMap<String, RemoteIssueType>();
+            try {
+                RemoteIssueType[] issueTypes = getJiraSite().createSession().getIssueTypes();
+                for (RemoteIssueType issueType : issueTypes) {
+                    jiraIssueTypeMap.put(issueType.getId(), issueType);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            } catch (ServiceException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return jiraIssueTypeMap;
     }
 
     /**
