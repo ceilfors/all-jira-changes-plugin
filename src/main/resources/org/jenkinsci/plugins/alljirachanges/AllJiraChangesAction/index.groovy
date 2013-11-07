@@ -29,8 +29,9 @@ import hudson.Functions
 import hudson.model.AbstractBuild
 import hudson.plugins.jira.JiraIssue
 import hudson.scm.ChangeLogSet
+import lib.LayoutTagLib
 
-l = namespace(lib.LayoutTagLib)
+l = namespace(LayoutTagLib)
 st = namespace("jelly:stapler")
 
 l.layout(title: _("title", my.project.name)) {
@@ -59,7 +60,7 @@ private buildNumber(String build) {
     }
 }
 
-private showChanges(Collection<AbstractBuild> builds) {
+private showChanges(builds) {
     boolean hadChanges = false;
     for (AbstractBuild build in builds) {
         Multimap<JiraIssue, ChangeLogSet.Entry> jiraIssueMultimap = my.getAllJiraChanges(build);
@@ -94,7 +95,10 @@ private showChanges(Collection<AbstractBuild> builds) {
 def showTitle(JiraIssue jiraIssue, issueExists) {
     def title = "${jiraIssue.id} - ${jiraIssue.title}"
     if (issueExists) {
-        img(src: my.getIssueType(jiraIssue.id).icon, style: "width: 17px; height: 17px; margin-right: 5px")
+        def issueType = my.getIssueType(jiraIssue.id)
+        if (issueType) {
+            img(src: issueType.icon, style: "width: 17px; height: 17px; margin-right: 5px")
+        }
         a(href: "${my.jiraSite.getUrl(jiraIssue.id)}", title)
     } else {
         text(title)
@@ -108,7 +112,7 @@ def showChangeLog(build, jiraIssue, changeLog, issueExists) {
         text(changeLog.msg)
     }
     text(" - ")
-    showDetailLink(jiraIssue, changeLog)
+    showDetailLink(changeLog)
     if (changeLog.parent.build != build) {
         text(" (")
         showBuild(changeLog.parent.build)
@@ -116,7 +120,8 @@ def showChangeLog(build, jiraIssue, changeLog, issueExists) {
     }
 }
 
-def showDetailLink(JiraIssue jiraIssue, ChangeLogSet.Entry changeLog) {
+def showDetailLink(ChangeLogSet.Entry changeLog) {
+    // From All changes plugin
     def build = changeLog.parent.build
     def browser = build.project.scm.effectiveBrowser
     if (browser?.getChangeSetLink(changeLog)) {

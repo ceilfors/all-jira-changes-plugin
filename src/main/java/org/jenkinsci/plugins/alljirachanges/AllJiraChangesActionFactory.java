@@ -35,6 +35,7 @@ import java.util.Collections;
 /**
  * @author ceilfors
  */
+@SuppressWarnings("UnusedDeclaration") // Jenkins Extension
 @Extension
 public class AllJiraChangesActionFactory extends TransientProjectActionFactory {
 
