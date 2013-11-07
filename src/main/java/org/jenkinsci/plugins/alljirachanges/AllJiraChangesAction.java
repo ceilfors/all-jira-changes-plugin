@@ -178,7 +178,7 @@ public class AllJiraChangesAction implements Action {
     }
 
     public String getIconFileName() {
-        return "notepad.jpg";
+        return "notepad.png";
     }
 
     public String getDisplayName() {
